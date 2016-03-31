@@ -1,0 +1,39 @@
+544 microwords x 17 bits
+
+10-bit address.
+
+Format I:
+
+          15 14                5 4 3 2 1 0
+	|F C|_ _ _ _NMA_ _ _ _ _|C|T Y|0|I|
+
+FC = Function Code	Mnemonic	Operation
+		00	n		No Access
+		00	u		Unknown Access Type
+		01	d		Data Access
+		10	i		Instruction Access
+		11	a		Interrupt Acknowledge
+NMA = Next Micro-ROM Address, 10 bits
+TY = Type		Mnemonic	Source of Next Address
+		00	db		NMA
+		01	a1		Address 1
+		10	a2		Address 2
+		11	a3		Address 3
+I = IRC Transfer			Transfer
+		CI	Mnemonic
+		00	db		Update neither IR nor TVN
+		01	dbi		IRC to IR, update TVN
+		10	dbc		IRC to IR, don't update TVN
+		11	dbl		IRC to IR, pratially update TVN
+
+Format II:
+
+          15 14            7 6       2 1 0
+	|F C|_ _ _NMBA _ _ _|   CBC   |1|I|
+
+CBC = Conditional Branch Code, 5 bits
+NMBA = Next Micro-ROM Base Address, 8 bits (+ 2 more bits to form an adddress)
+
+----------------------------------------------------------------------
+
+366 nanowords x 68 bits
