@@ -10,7 +10,7 @@ This document is based on :
  	(Motorola, 1993) (laterly refered as M68000UM)                                
  - Programmer's Reference Manual Rev 1                                          
         (Motorola, 1992) (laterly refered as M68000PRM)                         
- - US Patent n°4,325,121 - Two level control store for microprogrammed data     
+ - US Patent nÂ°4,325,121 - Two level control store for microprogrammed data     
  processor                                                                      
         (Motorola, Apr, 13, 1982) (lately refered as USP4325121)                
                                                                                 
@@ -1224,7 +1224,7 @@ FLOWCHART :
     (d8,An,Xn) | 38+2m(1/0) 10(2/0) | n    np    nr |               np       n* 
     (xxx).W    | 38+2m(1/0)  8(2/0) |      np    nr |               np       n* 
     (xxx).L    | 38+2m(1/0) 12(2/0) |   np np    nr |               np       n* 
-    #<data>    | 38+2m(1/0)  8(2/0) |   np np       |               np       n* 
+    #<data>    | 38+2m(1/0)  4(1/0) |      np       |               np       n* 
 NOTES :                                                                         
   .for MULU 'm' = the number of ones in the source                              
     - Best case 38 cycles with $0                                               
