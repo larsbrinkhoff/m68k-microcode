@@ -1,5 +1,5 @@
-                                      Yacht                                     
-			                  (Yet Another Cycle Hunting Table)                       
+                                   Yacht v1.1                                   
+                       (Yet Another Cycle Hunting Table)                        
                                                                                 
                                                                                 
 ------------------------------------------------------------------------------- 
@@ -7,28 +7,69 @@
 ------------------------------------------------------------------------------- 
 This document is based on :                                                     
  - 9th Edition of M68000 8-16-32-bit Microporcessor User's Manual               
- 	(Motorola, 1993) (laterly refered as M68000UM)                                
+  (Motorola, 1993) (laterly refered as M68000UM)                                
  - Programmer's Reference Manual Rev 1                                          
         (Motorola, 1992) (laterly refered as M68000PRM)                         
- - US Patent n°4,325,121 - Two level control store for microprogrammed data     
+ - US Patent nÂ°4,325,121 - Two level control store for microprogrammed data     
  processor                                                                      
         (Motorola, Apr, 13, 1982) (lately refered as USP4325121)                
+ - Error reports / question asked by users (see below)                          
+                                                                                
                                                                                 
 ------------------------------------------------------------------------------- 
-                                   Vocabulary :                                 
+                                   Changes log :                                
+------------------------------------------------------------------------------- 
+v1 : intitial release                                                           
+                                                                                
+v1.1 (this version) :                                                           
+- Lines #0042-#0056 : rewrote parts of the vocabulary section                   
+- Lines #0057-#0071 : added a general note section about this document          
+- Lines #0166-#0173 : added a note on Program Counter addressing modes          
+    - THX Atarizoll  & npomarede - http://atari-forum.com/viewtopic.php?t=26820 
+- Line  #0347 : added missing BTST Dn,#data timing                              
+    - THX flamewing - http://gendev.spritesmind.net/forum/viewtopic.php?t=2917  
+- Line  #0625 : fixed a typo on (xxx).L timing for CLR, NEGX, NEG, NOT          
+    - THX byuu - http://gendev.spritesmind.net/forum/viewtopic.php?t=3040       
+- Line  #1273 : fixed a copy / paste error on MULU / MULS #data,DN              
+    - THX TomH - http://www.atari-forum.com/viewtopic.php?t=36648               
+- Lines #0821-#0839, #0936, #0957 : coherency with exception section            
+    - THX TomH & ijor - http://www.atari-forum.com/viewtopic.php?t=36648        
+- Lines #1538-#1574 : fixed accurate exception timing                           
+    - THX ijor - http://www.atari-forum.com/viewtopic.php?t=36648               
+                                                                                
+                                                                                
+------------------------------------------------------------------------------- 
+                                  Vocabulary :                                  
 ------------------------------------------------------------------------------- 
 Clock Cycle : time between two adjacent pulses of the oscillator that sets the  
 tempo of the processor.                                                         
                                                                                 
-Microcycle : indivisible CPU cycle of execution : takes 2 clock cycles.         
+Microcycle : (in this document) indivisible CPU cycle of execution : takes 2    
+clock cycles.                                                                   
                                                                                 
 Bus Cycle : exept from the Read-Modify-Write Cycle that is only used by the TAS 
-instruction, a bus cycle consists of eight states. Each state longs half a      
-clock cycle so a full bus cycle is 4 clock cycles long.                         
+instruction, a bus cycle consists of eight states (if no wait cycle needed).    
+Each state longs half a clock cycle so a full bus cycle is 4 clock cycles long  
+in the best case.                                                               
                                                                                 
                                                                                 
 ------------------------------------------------------------------------------- 
-                                 Rules of thumb :                               
+                                 General note :                                 
+------------------------------------------------------------------------------- 
+This document is primary designed for programmers that need to know exactly how 
+many clock cycles are used by their code, when things are read or written in    
+memory and in which order.                                                      
+Consequently, the purpose of this document is to correct and explain the        
+instruction execution times as written in M68000UM.                             
+So, as in section 8 of M68000UM, this document "lists instruction execution     
+times in terms of external clock (CLK) periods. In this data, it is assumed     
+that both memory read and write cycles consist of four clock periods. A longer  
+memory cycle causes the generation of wait states that must be added to the     
+total instruction times."                                                       
+                                                                                
+                                                                                
+------------------------------------------------------------------------------- 
+                                Rules of thumb :                                
 ------------------------------------------------------------------------------- 
 1) 68000 external data bus is 16 bit so any operation on a long word in memory  
 will take at least 2 full bus cycles.                                           
@@ -85,7 +126,6 @@ In addition, each exec time is spltted in two parts (when possible) :
 "instruction exec time" and "effective address exec time". The two exec times   
 must be added in order to get the "real" exec time.                             
                                                                                 
-                                                                                
 Data Bus Usage :                                                                
 ----------------                                                                
 Each following caracter describe the state of the data bus during a microcycle. 
@@ -122,6 +162,12 @@ Data bus usage : ..r.p
 Takes 30 clock cycles (data bus read 5 times, written 2 times)                  
 Data bus usage : .p.p..R.r.p.w.W                                                
                                                                                 
+Note on Program Counter addressing modes :                                      
+------------------------------------------                                      
+(d16,PC) and (d16,An) always behave the same. It's also true for (d8,PC,Xn)     
+and (d8,An,Xn). So if you want to know the exact timing of an instruction with  
+PC related effective address, once you ensured that addressing mode is correct  
+for this instruction, please refer to the according An line.                    
                                                                                 
                                                                                 
                                                                                 
@@ -170,15 +216,15 @@ Data bus usage : .p.p..R.r.p.w.W
 #<data>,<ea> :    |                 |             |               |             
   .B or .W :      |                 |             |               |             
     Dn            |  8(2/0)  0(0/0) |          np |               | np          
-    (An)          | 12(2/1)  4(1/0) |          np |            nr | np nw	      
-    (An)+         | 12(2/1)  4(1/0) |          np |            nr | np nw	      
-    -(An)         | 12(2/1)  6(1/0) |          np | n          nr | np nw	      
-    (d16,An)      | 12(2/1)  8(2/0) |          np |      np    nr | np nw	      
-    (d8,An,Xn)    | 12(2/1) 10(2/0) |          np | n    np    nr | np nw	      
-    (xxx).W       | 12(2/1)  8(2/0) |          np |      np    nr | np nw	      
-    (xxx).L       | 12(2/1) 12(3/0) |          np |   np np    nr | np nw	      
+    (An)          | 12(2/1)  4(1/0) |          np |            nr | np nw       
+    (An)+         | 12(2/1)  4(1/0) |          np |            nr | np nw       
+    -(An)         | 12(2/1)  6(1/0) |          np | n          nr | np nw       
+    (d16,An)      | 12(2/1)  8(2/0) |          np |      np    nr | np nw       
+    (d8,An,Xn)    | 12(2/1) 10(2/0) |          np | n    np    nr | np nw       
+    (xxx).W       | 12(2/1)  8(2/0) |          np |      np    nr | np nw       
+    (xxx).L       | 12(2/1) 12(3/0) |          np |   np np    nr | np nw       
   .L :                              |             |               |             
-    Dn            | 16(3/0)  0(0/0) |       np np |               | np       nn	
+    Dn            | 16(3/0)  0(0/0) |       np np |               | np       nn 
     (An)          | 20(3/2)  8(2/0) |       np np |         nR nr | np nw nW    
     (An)+         | 20(3/2)  8(2/0) |       np np |         nR nr | np nw nW    
     -(An)         | 20(3/2) 10(2/0) |       np np | n       nR nr | np nw nW    
@@ -299,6 +345,7 @@ Dn,<ea> :         |                 |             |               |
     (d8,An,Xn)    |  4(1/0) 10(2/0) |             | n    np    nr | np          
     (xxx).W       |  4(1/0)  8(2/0) |             |      np    nr | np          
     (xxx).L       |  4(1/0) 12(3/0) |             |   np np    nr | np          
+    #<data>       |  6(1/0)  4(1/0) |             |      np       | np n        
 Dn,Dm :           |                 |             |               |             
   .L :            |  6(1/0)  0(0/0) |             |               | np n        
 #<data>,<ea> :    |                 |             |               |             
@@ -343,27 +390,27 @@ NOTES :
 ------------------+-----------------+---------------+-------------------------- 
 <ea>,Dn :         |                 |               |                           
   .B or .W :      |                 |               |                           
-    Dn            |  4(1/0)         |               |               np		      
-    An            |  4(1/0)         |               |               np		      
-    (An)          |  8(2/0)         |            nr |               np		      
-    (An)+         |  8(2/0)         |            nr |               np		      
-    -(An)         | 10(2/0)         | n          nr |               np		      
-    (d16,An)      | 12(3/0)         |      np    nr |               np		      
-    (d8,An,Xn)    | 14(3/0)         | n    np    nr |               np		      
-    (xxx).W       | 12(3/0)         |      np    nr |               np		      
-    (xxx).L       | 16(4/0)         |   np np    nr |               np		      
-    #<data>       |  8(2/0)         |      np       |               np		      
+    Dn            |  4(1/0)         |               |               np          
+    An            |  4(1/0)         |               |               np          
+    (An)          |  8(2/0)         |            nr |               np          
+    (An)+         |  8(2/0)         |            nr |               np          
+    -(An)         | 10(2/0)         | n          nr |               np          
+    (d16,An)      | 12(3/0)         |      np    nr |               np          
+    (d8,An,Xn)    | 14(3/0)         | n    np    nr |               np          
+    (xxx).W       | 12(3/0)         |      np    nr |               np          
+    (xxx).L       | 16(4/0)         |   np np    nr |               np          
+    #<data>       |  8(2/0)         |      np       |               np          
   .L :            |                 |               |                           
-    Dn            |  4(1/0)         |               |               np		      
-    An            |  4(1/0)         |               |               np		      
-    (An)          | 12(3/0)         |         nR nr |               np		      
-    (An)+         | 12(3/0)         |         nR nr |               np		      
-    -(An)         | 14(3/0)         | n       nR nr |               np		      
-    (d16,An)      | 16(4/0)         |      np nR nr |               np		      
-    (d8,An,Xn)    | 18(4/0)         | n    np nR nr |               np		      
-    (xxx).W       | 16(4/0)         |      np nR nr |               np		      
-    (xxx).L       | 20(5/0)         |   np np nR nr |               np		      
-    #<data>       | 12(3/0)         |   np np       |               np		      
+    Dn            |  4(1/0)         |               |               np          
+    An            |  4(1/0)         |               |               np          
+    (An)          | 12(3/0)         |         nR nr |               np          
+    (An)+         | 12(3/0)         |         nR nr |               np          
+    -(An)         | 14(3/0)         | n       nR nr |               np          
+    (d16,An)      | 16(4/0)         |      np nR nr |               np          
+    (d8,An,Xn)    | 18(4/0)         | n    np nR nr |               np          
+    (xxx).W       | 16(4/0)         |      np nR nr |               np          
+    (xxx).L       | 20(5/0)         |   np np nR nr |               np          
+    #<data>       | 12(3/0)         |   np np       |               np          
 <ea>,(An) :       |                 |               |                           
   .B or .W :      |                 |               |                           
     Dn            |  8(1/1)         |               |            nw np          
@@ -377,16 +424,16 @@ NOTES :
     (xxx).L       | 20(4/1)         |   np np    nr |            nw np          
     #<data>       | 12(2/1)         |      np       |            nw np          
   .L :            |                 |               |                           
-    Dn            | 12(1/2)         |               |         nW nw np		      
-    An            | 12(1/2)         |               |         nW nw np		      
-    (An)          | 20(3/2)         |         nR nr |         nW nw np		      
-    (An)+         | 20(3/2)         |         nR nr |         nW nw np		      
-    -(An)         | 22(3/2)         | n       nR nr |         nW nw np		      
-    (d16,An)      | 24(4/2)         |      np nR nr |         nW nw np		      
-    (d8,An,Xn)    | 26(4/2)         | n    np nR nr |         nW nw np		      
-    (xxx).W       | 24(4/2)         |      np nR nr |         nW nw np		      
-    (xxx).L       | 28(5/2)         |   np np nR nr |         nW nw np		      
-    #<data>       | 20(3/2)         |   np np       |         nW nw np		      
+    Dn            | 12(1/2)         |               |         nW nw np          
+    An            | 12(1/2)         |               |         nW nw np          
+    (An)          | 20(3/2)         |         nR nr |         nW nw np          
+    (An)+         | 20(3/2)         |         nR nr |         nW nw np          
+    -(An)         | 22(3/2)         | n       nR nr |         nW nw np          
+    (d16,An)      | 24(4/2)         |      np nR nr |         nW nw np          
+    (d8,An,Xn)    | 26(4/2)         | n    np nR nr |         nW nw np          
+    (xxx).W       | 24(4/2)         |      np nR nr |         nW nw np          
+    (xxx).L       | 28(5/2)         |   np np nR nr |         nW nw np          
+    #<data>       | 20(3/2)         |   np np       |         nW nw np          
 <ea>,(An)+ :      |                 |               |                           
   .B or .W :      |                 |               |                           
     Dn            |  8(1/1)         |               |            nw np          
@@ -436,18 +483,18 @@ NOTES :
 <ea>,(d16,An) :   |                 |               |                           
   .B or .W :      |                 |               |                           
     Dn            | 12(2/1)         |               |      np    nw np          
-    An            | 12(2/1)         |               |      np    nw np		      
-    (An)          | 16(3/1)         |            nr |      np    nw np		      
-    (An)+         | 16(3/1)         |            nr |      np    nw np		      
-    -(An)         | 18(3/1)         | n          nr |      np    nw np		      
-    (d16,An)      | 20(4/1)         |      np    nr |      np    nw np		      
-    (d8,An,Xn)    | 22(4/1)         | n    np    nr |      np    nw np		      
-    (xxx).W       | 20(4/1)         |      np    nr |      np    nw np		      
-    (xxx).L       | 24(5/1)         |   np np    nr |      np    nw np		      
-    #<data>       | 16(3/1)         |      np       |      np    nw np		      
+    An            | 12(2/1)         |               |      np    nw np          
+    (An)          | 16(3/1)         |            nr |      np    nw np          
+    (An)+         | 16(3/1)         |            nr |      np    nw np          
+    -(An)         | 18(3/1)         | n          nr |      np    nw np          
+    (d16,An)      | 20(4/1)         |      np    nr |      np    nw np          
+    (d8,An,Xn)    | 22(4/1)         | n    np    nr |      np    nw np          
+    (xxx).W       | 20(4/1)         |      np    nr |      np    nw np          
+    (xxx).L       | 24(5/1)         |   np np    nr |      np    nw np          
+    #<data>       | 16(3/1)         |      np       |      np    nw np          
   .L :            |                 |               |                           
-    Dn            | 16(2/2)         |               |      np nW nw np		      
-    An            | 16(2/2)         |               |      np nW nw np		      
+    Dn            | 16(2/2)         |               |      np nW nw np          
+    An            | 16(2/2)         |               |      np nW nw np          
     (An)          | 24(4/2)         |         nR nr |      np nW nw np          
     (An)+         | 24(4/2)         |         nR nr |      np nW nw np          
     -(An)         | 26(4/2)         | n       nR nr |      np nW nw np          
@@ -455,22 +502,22 @@ NOTES :
     (d8,An,Xn)    | 30(5/2)         | n    np nR nr |      np nW nw np          
     (xxx).W       | 28(5/2)         |      np nR nr |      np nW nw np          
     (xxx).L       | 32(6/2)         |   np np nR nr |      np nW nw np          
-    #<data>       | 24(4/2)         |   np np       |      np nW nw np		      
+    #<data>       | 24(4/2)         |   np np       |      np nW nw np          
 <ea>,(d8,An,Xn) : |                 |               |                           
   .B or .W :      |                 |               |                           
-    Dn            | 14(2/1)         |               | n    np    nw np		      
-    An            | 14(2/1)         |               | n    np    nw np		      
-    (An)          | 18(3/1)         |            nr | n    np    nw np		      
-    (An)+         | 18(3/1)         |            nr | n    np    nw np		      
-    -(An)         | 20(3/1)         | n          nr | n    np    nw np		      
-    (d16,An)      | 22(4/1)         |      np    nr | n    np    nw np		      
-    (d8,An,Xn)    | 24(4/1)         | n    np    nr | n    np    nw np		      
-    (xxx).W       | 22(4/1)         |      np    nr | n    np    nw np		      
-    (xxx).L       | 26(5/1)         |   np np    nr | n    np    nw np		      
-    #<data>       | 18(3/1)         |      np       | n    np    nw np		      
+    Dn            | 14(2/1)         |               | n    np    nw np          
+    An            | 14(2/1)         |               | n    np    nw np          
+    (An)          | 18(3/1)         |            nr | n    np    nw np          
+    (An)+         | 18(3/1)         |            nr | n    np    nw np          
+    -(An)         | 20(3/1)         | n          nr | n    np    nw np          
+    (d16,An)      | 22(4/1)         |      np    nr | n    np    nw np          
+    (d8,An,Xn)    | 24(4/1)         | n    np    nr | n    np    nw np          
+    (xxx).W       | 22(4/1)         |      np    nr | n    np    nw np          
+    (xxx).L       | 26(5/1)         |   np np    nr | n    np    nw np          
+    #<data>       | 18(3/1)         |      np       | n    np    nw np          
   .L :            |                 |               |                           
-    Dn            | 18(2/2)         |               | n    np nW nw np		      
-    An            | 18(2/2)         |               | n    np nW nw np		      
+    Dn            | 18(2/2)         |               | n    np nW nw np          
+    An            | 18(2/2)         |               | n    np nW nw np          
     (An)          | 26(4/2)         |         nR nr | n    np nW nw np          
     (An)+         | 26(4/2)         |         nR nr | n    np nW nw np          
     -(An)         | 28(4/2)         | n       nR nr | n    np nW nw np          
@@ -478,22 +525,22 @@ NOTES :
     (d8,An,Xn)    | 32(5/2)         | n    np nR nr | n    np nW nw np          
     (xxx).W       | 30(5/2)         |      np nR nr | n    np nW nw np          
     (xxx).L       | 34(6/2)         |   np np nR nr | n    np nW nw np          
-    #<data>       | 26(4/2)         |   np np       | n    np nW nw np		      
+    #<data>       | 26(4/2)         |   np np       | n    np nW nw np          
 <ea>,(xxx).W :    |                 |               |                           
   .B or .W :      |                 |               |                           
-    Dn            | 12(2/1)         |               |      np    nw np		      
-    An            | 12(2/1)         |               |      np    nw np		      
-    (An)          | 16(3/1)         |            nr |      np    nw np		      
-    (An)+         | 16(3/1)         |            nr |      np    nw np		      
-    -(An)         | 18(3/1)         | n          nr |      np    nw np		      
-    (d16,An)      | 20(4/1)         |      np    nr |      np    nw np		      
-    (d8,An,Xn)    | 22(4/1)         | n    np    nr |      np    nw np		      
-    (xxx).W       | 20(4/1)         |      np    nr |      np    nw np		      
-    (xxx).L       | 24(5/1)         |   np np    nr |      np    nw np		      
-    #<data>       | 16(3/1)         |      np       |      np    nw np		      
+    Dn            | 12(2/1)         |               |      np    nw np          
+    An            | 12(2/1)         |               |      np    nw np          
+    (An)          | 16(3/1)         |            nr |      np    nw np          
+    (An)+         | 16(3/1)         |            nr |      np    nw np          
+    -(An)         | 18(3/1)         | n          nr |      np    nw np          
+    (d16,An)      | 20(4/1)         |      np    nr |      np    nw np          
+    (d8,An,Xn)    | 22(4/1)         | n    np    nr |      np    nw np          
+    (xxx).W       | 20(4/1)         |      np    nr |      np    nw np          
+    (xxx).L       | 24(5/1)         |   np np    nr |      np    nw np          
+    #<data>       | 16(3/1)         |      np       |      np    nw np          
   .L :            |                 |               |                           
-    Dn            | 16(2/2)         |               |      np nW nw np		      
-    An            | 16(2/2)         |               |      np nW nw np		      
+    Dn            | 16(2/2)         |               |      np nW nw np          
+    An            | 16(2/2)         |               |      np nW nw np          
     (An)          | 24(4/2)         |         nR nr |      np nW nw np          
     (An)+         | 24(4/2)         |         nR nr |      np nW nw np          
     -(An)         | 26(4/2)         | n       nR nr |      np nW nw np          
@@ -501,22 +548,22 @@ NOTES :
     (d8,An,Xn)    | 30(5/2)         | n    np nR nr |      np nW nw np          
     (xxx).W       | 28(5/2)         |      np nR nr |      np nW nw np          
     (xxx).L       | 32(6/2)         |   np np nR nr |      np nW nw np          
-    #<data>       | 24(4/2)         |   np np       |      np nW nw np		      
+    #<data>       | 24(4/2)         |   np np       |      np nW nw np          
 <ea>,(xxx).L :    |                 |               |                           
   .B or .W :      |                 |               |                           
-    Dn            | 16(3/1)         |               |   np np    nw np		      
-    An            | 16(3/1)         |               |   np np    nw np		      
-    (An)          | 20(4/1)         |            nr |      np    nw np np	      
-    (An)+         | 20(4/1)         |            nr |      np    nw np np	      
-    -(An)         | 22(4/1)         | n          nr |      np    nw np np	      
-    (d16,An)      | 24(5/1)         |      np    nr |      np    nw np np	      
-    (d8,An,Xn)    | 26(5/1)         | n    np    nr |      np    nw np np	      
-    (xxx).W       | 24(5/1)         |      np    nr |      np    nw np np	      
-    (xxx).L       | 28(6/1)         |   np np    nr |      np    nw np np	      
-    #<data>       | 20(4/1)         |      np       |   np np    nw np		      
+    Dn            | 16(3/1)         |               |   np np    nw np          
+    An            | 16(3/1)         |               |   np np    nw np          
+    (An)          | 20(4/1)         |            nr |      np    nw np np       
+    (An)+         | 20(4/1)         |            nr |      np    nw np np       
+    -(An)         | 22(4/1)         | n          nr |      np    nw np np       
+    (d16,An)      | 24(5/1)         |      np    nr |      np    nw np np       
+    (d8,An,Xn)    | 26(5/1)         | n    np    nr |      np    nw np np       
+    (xxx).W       | 24(5/1)         |      np    nr |      np    nw np np       
+    (xxx).L       | 28(6/1)         |   np np    nr |      np    nw np np       
+    #<data>       | 20(4/1)         |      np       |   np np    nw np          
   .L :            |                 |               |                           
-    Dn            | 20(3/2)         |               |   np np nW nw np		      
-    An            | 20(3/2)         |               |   np np nW nw np		      
+    Dn            | 20(3/2)         |               |   np np nW nw np          
+    An            | 20(3/2)         |               |   np np nW nw np          
     (An)          | 28(5/2)         |         nR nr |      np nW nw np np       
     (An)+         | 28(5/2)         |         nR nr |      np nW nw np np       
     -(An)         | 30(5/2)         | n       nR nr |      np nW nw np np       
@@ -532,8 +579,8 @@ NOTES :
 ------------------+-----------------+---------------+-------------------------- 
 <ea>,An :         |                 |               |                           
   .W :            |                 |               |                           
-    Dn            |  4(1/0)         |               |               np		      
-    An            |  4(1/0)         |               |               np		      
+    Dn            |  4(1/0)         |               |               np          
+    An            |  4(1/0)         |               |               np          
     (An)          |  8(2/0)         |            nr |               np          
     (An)+         |  8(2/0)         |            nr |               np          
     -(An)         | 10(2/0)         | n          nr |               np          
@@ -541,10 +588,10 @@ NOTES :
     (d8,An,Xn)    | 14(3/0)         | n    np    nr |               np          
     (xxx).W       | 12(3/0)         |      np    nr |               np          
     (xxx).L       | 16(4/0)         |   np np    nr |               np          
-    #<data>       |  8(2/0)         |      np       |               np		      
+    #<data>       |  8(2/0)         |      np       |               np          
   .L :            |                 |               |                           
-    Dn            |  4(1/0)         |               |               np		      
-    An            |  4(1/0)         |               |               np		      
+    Dn            |  4(1/0)         |               |               np          
+    An            |  4(1/0)         |               |               np          
     (An)          | 12(3/0)         |         nR nr |               np          
     (An)+         | 12(3/0)         |         nR nr |               np          
     -(An)         | 14(3/0)         | n       nR nr |               np          
@@ -552,7 +599,7 @@ NOTES :
     (d8,An,Xn)    | 18(4/0)         | n    np nR nr |               np          
     (xxx).W       | 16(4/0)         |      np nR nr |               np          
     (xxx).L       | 20(5/0)         |   np np nR nr |               np          
-    #<data>       | 12(3/0)         |   np np       |               np		      
+    #<data>       | 12(3/0)         |   np np       |               np          
                                                                                 
                                                                                 
                                                                                 
@@ -576,7 +623,7 @@ NOTES :
     (d16,An)      |  8(1/1)  8(2/0) |      np    nr |               np nw       
     (d8,An,Xn)    |  8(1/1) 10(2/0) | n    np    nr |               np nw       
     (xxx).W       |  8(1/1)  8(2/0) |      np    nr |               np nw       
-    (xxx).L       |  8(1/1) 12(2/0) |   np np    nr |               np nw       
+    (xxx).L       |  8(1/1) 12(3/0) |   np np    nr |               np nw       
   .L :            |                 |               |                           
     Dn            |  6(1/0)  0(0/0) |               |               np       n  
     (An)          | 12(1/2)  8(2/0) |         nR nr |               np nw nW    
@@ -646,14 +693,14 @@ SR,<ea> :         |                 |               |
     (xxx).L       | 20(3/2)         |                          np   np nS ns np 
                                                                                 
 ------------------------------------------------------------------------------- 
-	                |    Exec Time    |               Data Bus Usage              
+                  |    Exec Time    |               Data Bus Usage              
        SWAP       |      INSTR      |                  INSTR                    
 ------------------+-----------------+------------------------------------------ 
 Dn :              |                 |                                           
   .W :            |  4(1/0)         |                               np          
                                                                                 
 ------------------------------------------------------------------------------- 
-	                |    Exec Time    |               Data Bus Usage              
+                  |    Exec Time    |               Data Bus Usage              
       MOVEM       |      INSTR      |                  INSTR                    
 ------------------+-----------------+------------------------------------------ 
 M --> R           |                 |                                           
@@ -706,7 +753,7 @@ Dn :              |                 |               |
   .L :            |  4(1/0)         |               |               np          
                                                                                 
 ------------------------------------------------------------------------------- 
-	                |     Exec Time   |               Data Bus Usage              
+                  |     Exec Time   |               Data Bus Usage              
        TST        |  INSTR     EA   |  1st OP (ea)  |          INSTR            
 ------------------+-----------------+---------------+-------------------------- 
 <ea> :            |                 |               |                           
@@ -730,7 +777,7 @@ Dn :              |                 |               |
     (xxx).L       |  4(1/0) 16(4/0) |   np np nR nr |               np          
                                                                                 
 ------------------------------------------------------------------------------- 
-	                |    Exec Time    |               Data Bus Usage              
+                  |    Exec Time    |               Data Bus Usage              
        TAS        |  INSTR     EA   |  1st OP (ea)  |          INSTR            
 ------------------+-----------------+---------------+-------------------------- 
 <ea> :            |                 |               |                           
@@ -751,44 +798,44 @@ NOTES :
    evaluation on real hardware confirms the 10 cycles timing.                   
                                                                                 
 ------------------------------------------------------------------------------- 
-                  |    Exec Time    |               Data Bus Usage              
-        CHK       |  INSTR     EA   |  1st OP (ea)  |          INSTR            
-------------------+-----------------+---------------+-------------------------- 
-no trap :         |                 |               |                           
-  <ea>,Dn :       |                 |              /                            
-    .W :          |                 |             /                             
-      Dn          | 10(1/0)  0(0/0) |            |                  np nn n     
-      (An)        | 10(1/0)  4(1/0) |         nr |                  np nn n     
-      (An)+       | 10(1/0)  4(1/0) |         nr |                  np nn n     
-      -(An)       | 10(1/0)  6(1/0) | n       nr |                  np nn n     
-      (d16,An)    | 10(1/0)  8(2/0) |      np nr |                  np nn n     
-      (d8,An,Xn)  | 10(1/0) 10(2/0) | n    np nr |                  np nn n     
-      (xxx).W     | 10(1/0)  8(2/0) |      np nr |                  np nn n     
-      (xxx).L     | 10(1/0) 12(2/0) |   np np nr |                  np nn n     
-      #<data>     | 10(1/0)  4(1/0) |      np    |                  np nn n     
-trap :            |                 |            |                              
-  <ea>,Dn :       |                 |            |                              
-    .W :          |                 |            |                              
-      Dn > Src :  |                 |            |                              
-        Dn        | 36(5/3)  0(0/0) |            |   np nn ns nS ns np np np np 
-        (An)      | 36(5/3)  4(1/0) |         nr |   np nn ns nS ns np np np np 
-        (An)+     | 36(5/3)  4(1/0) |         nr |   np nn ns nS ns np np np np 
-        -(An)     | 36(5/3)  6(1/0) | n       nr |   np nn ns nS ns np np np np 
-        (d16,An)  | 36(5/3)  8(2/0) |      np nr |   np nn ns nS ns np np np np 
-        (d8,An,Xn)| 36(5/3) 10(2/0) | n    np nr |   np nn ns nS ns np np np np 
-        (xxx).W   | 36(5/3)  8(2/0) |      np nr |   np nn ns nS ns np np np np 
-        (xxx).L   | 36(5/3) 12(2/0) |   np np nr |   np nn ns nS ns np np np np 
-        #<data>   | 36(5/3)  4(1/0) |      np    |   np nn ns nS ns np np np np 
-      Dn <0 :     |                 |            |                              
-        Dn        | 40(5/3)  0(0/0) |            |np n- nn ns nS ns np np np np 
-        (An)      | 40(5/3)  4(1/0) |         nr |np n- nn ns nS ns np np np np 
-        (An)+     | 40(5/3)  4(1/0) |         nr |np n- nn ns nS ns np np np np 
-        -(An)     | 40(5/3)  6(1/0) | n       nr |np n- nn ns nS ns np np np np 
-        (d16,An)  | 40(5/3)  8(2/0) |      np nr |np n- nn ns nS ns np np np np 
-        (d8,An,Xn)| 40(5/3) 10(2/0) | n    np nr |np n- nn ns nS ns np np np np 
-        (xxx).W   | 40(5/3)  8(2/0) |      np nr |np n- nn ns nS ns np np np np 
-        (xxx).L   | 40(5/3) 12(2/0) |   np np nr |np n- nn ns nS ns np np np np 
-        #<data>   | 40(5/3)  4(1/0) |      np    |np n- nn ns nS ns np np np np 
+              |   Exec Time    |               Data Bus Usage                   
+        CHK   |  INSTR    EA   |  1st OP (ea)  |          INSTR                 
+--------------+----------------+---------------+------------------------------- 
+no trap :     |                |              |                                 
+ <ea>,Dn :    |                |             /                                  
+  .W :        |                |            /                                   
+   Dn         |10(1/0)  0(0/0) |           |np nn  n                            
+   (An)       |10(1/0)  4(1/0) |        nr |np nn  n                            
+   (An)+      |10(1/0)  4(1/0) |        nr |np nn  n                            
+   -(An)      |10(1/0)  6(1/0) |n       nr |np nn  n                            
+   (d16,An)   |10(1/0)  8(2/0) |     np nr |np nn  n                            
+   (d8,An,Xn) |10(1/0) 10(2/0) |n    np nr |np nn  n                            
+   (xxx).W    |10(1/0)  8(2/0) |     np nr |np nn  n                            
+   (xxx).L    |10(1/0) 12(2/0) |  np np nr |np nn  n                            
+   #<data>    |10(1/0)  4(1/0) |     np    |np nn  n                            
+trap :        |                |           |                                    
+ <ea>,Dn :    |                |           |                                    
+  .W :        |                |           |                                    
+   Dn > Src : |                |           |                                    
+    Dn        |38(5/3)  0(0/0) |           |np       nn ns ns nS nV nv np  n np 
+    (An)      |38(5/3)  4(1/0) |        nr |np       nn ns ns nS nV nv np  n np 
+    (An)+     |38(5/3)  4(1/0) |        nr |np       nn ns ns nS nV nv np  n np 
+    -(An)     |38(5/3)  6(1/0) |n       nr |np       nn ns ns nS nV nv np  n np 
+    (d16,An)  |38(5/3)  8(2/0) |     np nr |np       nn ns ns nS nV nv np  n np 
+    (d8,An,Xn)|38(5/3) 10(2/0) |n    np nr |np       nn ns ns nS nV nv np  n np 
+    (xxx).W   |38(5/3)  8(2/0) |     np nr |np       nn ns ns nS nV nv np  n np 
+    (xxx).L   |38(5/3) 12(2/0) |  np np nr |np       nn ns ns nS nV nv np  n np 
+    #<data>   |38(5/3)  4(1/0) |     np    |np       nn ns ns nS nV nv np  n np 
+   Dn <0 :    |                |           |                                    
+    Dn        |40(5/3)  0(0/0) |           |np  n    nn ns ns nS nV nv np  n np 
+    (An)      |40(5/3)  4(1/0) |        nr |np  n    nn ns ns nS nV nv np  n np 
+    (An)+     |40(5/3)  4(1/0) |        nr |np  n    nn ns ns nS nV nv np  n np 
+    -(An)     |40(5/3)  6(1/0) |n       nr |np  n    nn ns ns nS nV nv np  n np 
+    (d16,An)  |40(5/3)  8(2/0) |     np nr |np  n    nn ns ns nS nV nv np  n np 
+    (d8,An,Xn)|40(5/3) 10(2/0) |n    np nr |np  n    nn ns ns nS nV nv np  n np 
+    (xxx).W   |40(5/3)  8(2/0) |     np nr |np  n    nn ns ns nS nV nv np  n np 
+    (xxx).L   |40(5/3) 12(2/0) |  np np nr |np  n    nn ns ns nS nV nv np  n np 
+    #<data>   |40(5/3)  4(1/0) |     np    |np  n    nn ns ns nS nV nv np  n np 
 NOTES :                                                                         
   . for more informations about the "trap" lines see exceptions section below.  
                                                                                 
@@ -849,7 +896,7 @@ NOTES :
   .RESET instruction have nothing to do with /RESET exception.                  
                                                                                 
 ------------------------------------------------------------------------------- 
-	                |    Exec Time    |               Data Bus Usage              
+                  |    Exec Time    |               Data Bus Usage              
        NOP        |      INSTR      |                  INSTR                    
 ------------------+-----------------+------------------------------------------ 
                   |  4(1/0)         |                               np          
@@ -864,7 +911,7 @@ NOTES :
    instruction is spent.                                                        
                                                                                 
 ------------------------------------------------------------------------------- 
-	                |    Exec Time    |               Data Bus Usage              
+                  |    Exec Time    |               Data Bus Usage              
      RTE, RTR     |      INSTR      |                  INSTR                    
 ------------------+-----------------+------------------------------------------ 
                   | 20(5/0)         |                      nU nu nu np np       
@@ -875,17 +922,17 @@ NOTES :
    program counter values from the stack and prefetching.                       
                                                                                 
 ------------------------------------------------------------------------------- 
-	                |    Exec Time    |               Data Bus Usage              
+                  |    Exec Time    |               Data Bus Usage              
        RTS        |      INSTR      |                  INSTR                    
 ------------------+-----------------+------------------------------------------ 
                   | 16(4/0)         |                   nU nu    np np          
                                                                                 
 ------------------------------------------------------------------------------- 
-	                |    Exec Time    |               Data Bus Usage              
+                  |    Exec Time    |               Data Bus Usage              
       TRAPV       |      INSTR      |                  INSTR                    
 ------------------+-----------------+------------------------------------------ 
-no trap           |  4(1/0)         |                               np          
-   trap           | 34(5/3)         |          np ns nS ns np np np np          
+no trap           |  4(1/0)         |    np                                     
+   trap           | 34(5/3)         |    np             ns nS ns nV nv np  n np 
 NOTES :                                                                         
   . for more informations about the "trap" line see exceptions section below.   
                                                                                 
@@ -897,16 +944,16 @@ An,#<data> :      |                 |
   .W :            | 16(2/2)         |                      np nS ns np          
                                                                                 
 ------------------------------------------------------------------------------- 
-	                |    Exec Time    |               Data Bus Usage              
+                  |    Exec Time    |               Data Bus Usage              
       UNLNK       |      INSTR      |                  INSTR                    
 ------------------+-----------------+------------------------------------------ 
 An :              | 12(3/0)         |                         nU nu np          
                                                                                 
 ------------------------------------------------------------------------------- 
-	                |    Exec Time    |               Data Bus Usage              
+                  |    Exec Time    |               Data Bus Usage              
   ILLEGAL, TRAP   |      INSTR      |                  INSTR                    
 ------------------+-----------------+------------------------------------------ 
-                  | 34(4/3)         |          nn ns nS ns np np np np          
+                  | 34(4/3)         |             nn    ns ns nS nV nv np  n np 
 NOTES :                                                                         
   .For more informations about this instruction see exceptions section below.   
                                                                                 
@@ -1070,33 +1117,33 @@ Dy,Dx :           |                 |
 <ea>,Dn :         |                 |               |                           
   .B or .W :      |                 |               |                           
     Dn            |  4(1/0)  0(0/0) |               |               np          
-    (An)          |  4(1/0)  4(1/0) |            nr |               np		      
-    (An)+         |  4(1/0)  4(1/0) |            nr |               np		      
-    -(An)         |  4(1/0)  6(1/0) | n          nr |               np		      
-    (d16,An)      |  4(1/0)  8(2/0) |      np    nr |               np		      
-    (d8,An,Xn)    |  4(1/0) 10(2/0) | n    np    nr |               np		      
-    (xxx).W       |  4(1/0)  8(2/0) |      np    nr |               np		      
-    (xxx).L       |  4(1/0) 12(3/0) |   np np    nr |               np		      
-    #<data>       |  4(1/0)  4(1/0) |      np       |               np		      
+    (An)          |  4(1/0)  4(1/0) |            nr |               np          
+    (An)+         |  4(1/0)  4(1/0) |            nr |               np          
+    -(An)         |  4(1/0)  6(1/0) | n          nr |               np          
+    (d16,An)      |  4(1/0)  8(2/0) |      np    nr |               np          
+    (d8,An,Xn)    |  4(1/0) 10(2/0) | n    np    nr |               np          
+    (xxx).W       |  4(1/0)  8(2/0) |      np    nr |               np          
+    (xxx).L       |  4(1/0) 12(3/0) |   np np    nr |               np          
+    #<data>       |  4(1/0)  4(1/0) |      np       |               np          
   .L :            |                 |               |                           
-    Dn            |  8(1/0)  0(0/0) |               |               np       nn	
-    (An)          |  6(1/0)  8(2/0) |         nR nr |               np       n	
-    (An)+         |  6(1/0)  8(2/0) |         nR nr |               np       n	
-    -(An)         |  6(1/0) 10(2/0) | n       nR nr |               np       n	
-    (d16,An)      |  6(1/0) 12(3/0) |      np nR nr |               np       n	
-    (d8,An,Xn)    |  6(1/0) 14(3/0) | n    np nR nr |               np       n	
-    (xxx).W       |  6(1/0) 12(3/0) |      np nR nr |               np       n	
-    (xxx).L       |  6(1/0) 16(4/0) |   np np nR nr |               np       n	
-    #<data>       |  8(1/0)  8(2/0) |   np np       |               np       nn	
+    Dn            |  8(1/0)  0(0/0) |               |               np       nn 
+    (An)          |  6(1/0)  8(2/0) |         nR nr |               np       n  
+    (An)+         |  6(1/0)  8(2/0) |         nR nr |               np       n  
+    -(An)         |  6(1/0) 10(2/0) | n       nR nr |               np       n  
+    (d16,An)      |  6(1/0) 12(3/0) |      np nR nr |               np       n  
+    (d8,An,Xn)    |  6(1/0) 14(3/0) | n    np nR nr |               np       n  
+    (xxx).W       |  6(1/0) 12(3/0) |      np nR nr |               np       n  
+    (xxx).L       |  6(1/0) 16(4/0) |   np np nR nr |               np       n  
+    #<data>       |  8(1/0)  8(2/0) |   np np       |               np       nn 
 Dn,<ea> :         |                 |               |                           
   .B or .W :      |                 |               |                           
-    (An)          |  8(1/1)  4(1/0) |            nr |               np nw	      
-    (An)+         |  8(1/1)  4(1/0) |            nr |               np nw	      
-    -(An)         |  8(1/1)  6(1/0) | n          nr |               np nw	      
-    (d16,An)      |  8(1/1)  8(2/0) |      np    nr |               np nw	      
-    (d8,An,Xn)    |  8(1/1) 10(2/0) | n    np    nr |               np nw	      
-    (xxx).W       |  8(1/1)  8(2/0) |      np    nr |               np nw	      
-    (xxx).L       |  8(1/1) 12(3/0) |   np np    nr |               np nw	      
+    (An)          |  8(1/1)  4(1/0) |            nr |               np nw       
+    (An)+         |  8(1/1)  4(1/0) |            nr |               np nw       
+    -(An)         |  8(1/1)  6(1/0) | n          nr |               np nw       
+    (d16,An)      |  8(1/1)  8(2/0) |      np    nr |               np nw       
+    (d8,An,Xn)    |  8(1/1) 10(2/0) | n    np    nr |               np nw       
+    (xxx).W       |  8(1/1)  8(2/0) |      np    nr |               np nw       
+    (xxx).L       |  8(1/1) 12(3/0) |   np np    nr |               np nw       
   .L :            |                 |                                           
     (An)          | 12(1/2)  8(2/0) |         nR nr |               np nw nW    
     (An)+         | 12(1/2)  8(2/0) |         nR nr |               np nw nW    
@@ -1224,7 +1271,8 @@ FLOWCHART :
     (d8,An,Xn) | 38+2m(1/0) 10(2/0) | n    np    nr |               np       n* 
     (xxx).W    | 38+2m(1/0)  8(2/0) |      np    nr |               np       n* 
     (xxx).L    | 38+2m(1/0) 12(2/0) |   np np    nr |               np       n* 
-    #<data>    | 38+2m(1/0)  8(2/0) |   np np       |               np       n* 
+    #<data>    | 38+2m(1/0)  4(1/0) |      np       |               np       n* 
+
 NOTES :                                                                         
   .for MULU 'm' = the number of ones in the source                              
     - Best case 38 cycles with $0                                               
@@ -1424,14 +1472,14 @@ Dy,Dx :           |                 |
 ------------------+-----------------+---------------+-------------------------- 
 Dn,<ea> :         |                 |               |                           
   .B or .W :      |                 |               |                           
-    Dn            |  4(1/0)  0(0/0) |               |               np		      
-    (An)          |  8(1/1)  4(1/0) |            nr |               np nw	      
-    (An)+         |  8(1/1)  4(1/0) |            nr |               np nw	      
-    -(An)         |  8(1/1)  6(1/0) | n          nr |               np nw	      
-    (d16,An)      |  8(1/1)  8(2/0) |      np    nr |               np nw	      
-    (d8,An,Xn)    |  8(1/1) 10(2/0) | n    np    nr |               np nw	      
-    (xxx).W       |  8(1/1)  8(2/0) |      np    nr |               np nw	      
-    (xxx).L       |  8(1/1) 12(3/0) |   np np    nr |               np nw	      
+    Dn            |  4(1/0)  0(0/0) |               |               np          
+    (An)          |  8(1/1)  4(1/0) |            nr |               np nw       
+    (An)+         |  8(1/1)  4(1/0) |            nr |               np nw       
+    -(An)         |  8(1/1)  6(1/0) | n          nr |               np nw       
+    (d16,An)      |  8(1/1)  8(2/0) |      np    nr |               np nw       
+    (d8,An,Xn)    |  8(1/1) 10(2/0) | n    np    nr |               np nw       
+    (xxx).W       |  8(1/1)  8(2/0) |      np    nr |               np nw       
+    (xxx).L       |  8(1/1) 12(3/0) |   np np    nr |               np nw       
   .L :            |                 |               |                           
     Dn            |  8(1/0)  0(0/0) |               |               np       nn 
     (An)          | 12(1/2)  8(2/0) |         nR nr |               np nw nW    
@@ -1467,7 +1515,7 @@ Dx,Dy :           |                 |               |
     (An)+         |  8(1/1)  4(1/0) |            nr |               np    nw    
     -(An)         |  8(1/1)  6(1/0) | n          nr |               np    nw    
     (d16,An)      |  8(1/1)  8(2/0) |      np    nr |               np    nw    
-    (d8,An)       |  8(1/1) 10(2/0) | n    np    nr |               np    nw    
+    (d8,An,Xn)    |  8(1/1) 10(2/0) | n    np    nr |               np    nw    
     (xxx).W       |  8(1/1)  8(2/0) |      np    nr |               np    nw    
     (xxx).L       |  8(1/1) 12(3/0) |   np np    nr |               np    nw    
 NOTES :                                                                         
@@ -1493,28 +1541,29 @@ NOTES :
 ----------------------+----------+--------------------------------------------- 
                       |          |                                              
 Group 0 :             |          |                                              
-  Address error       | 50(4/7)  |48   nn ns ns nS ns ns ns nS nV nv np np      
-  Bus error           | 50(4/7)  |48   nn ns ns nS ns ns ns nS nV nv np np      
-  /RESET              | 40(6/0)  |38   (n-)*5   nn       nF nf nV nv np np      
+  Address error       | 50(4/7)  |    nn ns ns nS ns ns ns nS nV nv np  n np    
+  Bus error           | 50(4/7)  |    nn ns ns nS ns ns ns nS nV nv np  n np    
+  /RESET              | 40(6/0)  |    (n-)*5   nn       nF nf nV nv np  n np    
 Group 1 :             |          |                                              
-  Trace               | 34(4/3)  |32            nn    ns nS ns nV nv np np      
-  Interrupt           | 44(5/3)  |42    n nn ns ni n-  n nS ns nV nv np np      
-  Privilege Violation | 34(4/3)  |32            nn    ns ns nS nV nv np np      
-  Illegal Instruction | 34(4/3)  |32            nn    ns ns nS nV nv np np      
+  Trace               | 34(4/3)  |             nn    ns nS ns nV nv np  n np    
+  Interrupt           | 44(5/3)  |     n nn ns ni n-  n nS ns nV nv np  n np    
+  Privilege Violation | 34(4/3)  |             nn    ns ns nS nV nv np  n np    
+  Illegal Instruction | 34(4/3)  |             nn    ns ns nS nV nv np  n np    
 Group 2 :             |          |                                              
-  CHK Instruction     | 40(4/3)+ |38 np (n-)    nn    ns ns nS nV nv np np      
-  Divide by Zero      | 38(4/3)+ |36         nn nn    ns ns nS nV nv np np      
-  TRAP instruction    | 34(4/3)  |32            nn    ns ns nS nV nv np np      
-  TRAPV instruction   | 34(5/3)  |32 np               ns nS ns nV nv np np      
+  CHK Instruction     | 40(4/3)+ |    np (n-)  nn    ns ns nS nV nv np  n np    
+  Divide by Zero      | 38(4/3)+ |          nn nn    ns ns nS nV nv np  n np    
+  TRAP instruction    | 34(4/3)  |             nn    ns ns nS nV nv np  n np    
+  TRAPV instruction   | 34(5/3)  |    np             ns nS ns nV nv np  n np    
 NOTES:                                                                          
+  .for CHK and Divide by zero, you must add effective address calculation time  
+   to the period (according to instruction section above).                      
   .for CHK, Divide by Zero, Illegal, Trap and TRAPV :                           
     .The numbers of clock periods, for the "trap" lines, include the times for  
      all stacking, the vector fetch and the fetch of the first instruction of   
      THE handler routine.                                                       
-    .First are pushed on the stack the program counter high and low words then  
-     the status register.                                                       
-  .for CHK and Divide by zero, you must add effective address calculation time  
-   to the period (according to instruction section above).                      
+    .First are pushed on the stack the program counter low word (at sp-2) and   
+   the status register (at sp-6) then, finally, the program counter high word   
+   (at sp-4).                                                                   
   ./RESET line indicates the time from when /RESET and /HALT are first sampled  
    as negated to when instruction execution starts. For a subsequent external   
    reset, asserting these signals for 10 clock cycles or longer is mandatory to 
@@ -1524,9 +1573,6 @@ NOTES:
    asserts the /RESET signal for 124 clock cycles during execution of a reset   
    instruction, an external reset should assert /RESET for at least 132 clock   
    periods.                                                                     
-  .For all these exceptions, there is a difference of 2 cycles between Data     
-   bus usage as obtained from USP4325121 and periods as written in M68000UM.    
-   There's no proven theory to explain this gap.                                
                                                                                 
                                                                                 
                                                                                 
@@ -1540,4 +1586,4 @@ NOTES:
                       |  ?(0/0)  |  (n-)*                                       
 NOTES :                                                                         
   .this state is entered when a major failure happens and can only be exited    
-   by reseting the CPU. Between these two events fit *as many (n-) as necessary.
+   by reseting the CPU. Between these two events fit as many (n-) as necessary. 
